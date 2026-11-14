@@ -6,13 +6,19 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check && tsc -p tsconfig.worker.json",
+    "db:migrate:local": "wrangler d1 migrations apply itschool-prep --local",
+    "db:migrate:remote": "wrangler d1 migrations apply itschool-prep --remote",
+    "pages:dev": "wrangler pages dev",
+    "test:api": "bash tests/run-local.sh"
   },
   "dependencies": {
     "astro": "^7.4.12"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
-    "typescript": "^6.0.3"
+    "@cloudflare/workers-types": "^5.20261114.1",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.160.0"
   }
 }

@@ -2,6 +2,9 @@
 import ConsentSummary from './ConsentSummary.astro';
 import { participationTypes, join } from '../data/home';
 import { LIMITS } from '../lib/apply';
+
+// 스팸 방지 위젯. 사이트 키가 없으면(로컬 개발) 표시하지 않는다.
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
 ---
 <div class="apply" data-apply>
   <!-- JS가 없어도 일반 POST로 제출된다(T5에서 서버가 form 인코딩도 처리). -->
@@ -71,6 +74,13 @@ import { LIMITS } from '../lib/apply';
         <span>설립 소식을 이메일로 받겠습니다. <span class="optional">(선택)</span></span>
       </label>
     </div>
+
+    {turnstileSiteKey && (
+      <>
+        <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-language="ko" data-theme="light"></div>
+        <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+      </>
+    )}
 
     <div class="submit-row">
       <button class="btn btn-primary" type="submit" data-submit>참여 의향 보내기</button>
@@ -175,6 +185,8 @@ import { LIMITS } from '../lib/apply';
         status.textContent = '네트워크 연결을 확인한 뒤 다시 시도해 주세요.';
       } finally {
         submitBtn.disabled = false;
+        // Turnstile 토큰은 1회용이므로 서버에 다녀온 뒤에는 새로 받는다
+        (window as unknown as { turnstile?: { reset(): void } }).turnstile?.reset();
       }
     });
 
