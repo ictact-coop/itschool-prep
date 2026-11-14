@@ -1,16 +1,31 @@
-# Cloudflare Pages 설정. 비밀값(RESEND_API_KEY, TURNSTILE_SECRET, RATE_SALT)은
-# 대시보드 또는 `wrangler pages secret put`으로 넣고 이 파일에 쓰지 않는다.
-name = "itschool-prep"
-pages_build_output_dir = "./dist"
+# Cloudflare Workers(정적 자산 + Worker) 설정.
+# 비밀값(RESEND_API_KEY, TURNSTILE_SECRET, RATE_SALT)은 대시보드(Worker → Settings → Variables and Secrets)
+# 또는 `npx wrangler secret put <이름>`으로 넣고 이 파일에 쓰지 않는다.
+name = "itschool-prep"          # Cloudflare의 Worker 이름과 같아야 한다
+main = "src/worker.ts"
 compatibility_date = "2026-11-01"
+
+# `wrangler deploy`/`wrangler dev` 직전에 사이트를 빌드한다(대시보드 빌드 명령이 비어 있어도 동작).
+[build]
+command = "npm run build"
+
+# 빌드된 정적 파일. 파일이 없는 경로(/api/*)만 Worker가 처리한다.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[observability]
+enabled = true
 
 [[d1_databases]]
 binding = "DB"
 database_name = "itschool-prep"
 database_id = "7a02b40b-78bc-4aca-9fe2-8a2fbdd11274"
+migrations_dir = "migrations"
 
 [vars]
-# 아래 셋은 정해지면 채운다. 비어 있으면 해당 메일을 보내지 않는다.
+# 아래 둘은 정해지면 채운다. 비어 있으면 메일을 보내지 않는다.
 MAIL_FROM = ""        # 예: "IT학교 설립추진위원회 <noreply@itschool.ictact.kr>"
 NOTIFY_TO = ""        # 담당자 수신 주소(쉼표로 여러 개)
 SITE_URL = "https://itschool.ictact.kr"

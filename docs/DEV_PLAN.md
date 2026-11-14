@@ -8,11 +8,11 @@
 
 | 작업 | 상태 | 비고 |
 |---|---|---|
-| T1 기반 | 완료 (PR #1) | Pages 연결은 계정 소유자 |
+| T1 기반 | 완료 (PR #1) | Workers 배포로 전환(PR #6) |
 | T2 랜딩 | 완료 (PR #2) | |
 | T3 처리방침 | 대기 | D3 필요 |
 | T4 신청 폼 화면 | 완료 (PR #3) | |
-| T5 신청 API | 완료 (로컬 검증) | Cloudflare 설정 후 실환경 확인. `docs/CLOUDFLARE_SETUP.md` |
+| T5 신청 API | 완료 (로컬 검증, PR #4) | Cloudflare 설정 후 실환경 확인. `docs/CLOUDFLARE_SETUP.md` |
 | T6~T9 | 예정 | |
 
 ## 1. 확정된 범위
@@ -56,8 +56,8 @@
 | 영역 | 선택 | 이유 |
 |---|---|---|
 | 프런트 | Astro (정적 출력) + 순수 CSS, JS 최소 | 기획서 권장, Markdown 콘텐츠 컬렉션으로 소식·상태 관리 |
-| 호스팅 | Cloudflare Pages | 강사 진단 프로토타입과 같은 플랫폼, 무료 HTTPS, 커스텀 도메인 |
-| 폼 API | Pages Functions `POST /api/apply` | 별도 서버 없음 |
+| 호스팅 | Cloudflare Workers(정적 자산) | Cloudflare가 새 프로젝트에 권장, 무료 HTTPS, 커스텀 도메인 (2026-11-14 Pages에서 변경) |
+| 폼 API | Worker `POST /api/apply` (`src/worker.ts`) | 별도 서버 없음 |
 | 저장소 | Cloudflare D1 (SQLite) | 내보내기·삭제를 직접 통제, 외부 폼 서비스 위탁 문제 회피 |
 | 스팸 방지 | Turnstile + honeypot + IP 해시 기반 횟수 제한(KV, TTL) | IP 원문 저장 안 함 |
 | 알림 | 신청 시 담당자 메일 (Email Routing 송신 또는 Resend) | 신청자 자동 안내문 포함 |
@@ -95,7 +95,7 @@ CREATE TABLE applications (
 
 ### T1. 프로젝트 기반과 미리보기 배포 — P0
 - 파일: `package.json`, `astro.config.mjs`, `src/styles/tokens.css`, `src/layouts/Base.astro`
-- 산출: 디자인 토큰(녹색 계열 주색, 회녹 배경, 카드 반경), 기본 레이아웃, Pages 미리보기 URL (Git 연동은 Cloudflare 계정 소유자가 연결)
+- 산출: 디자인 토큰(녹색 계열 주색, 회녹 배경, 카드 반경), 기본 레이아웃, workers.dev 미리보기 URL (Git 연동은 Cloudflare 계정 소유자가 연결)
 - 검증: `npm run build` 성공, 미리보기 URL 200
 
 ### T2. 랜딩 9개 섹션(정적) — P0, T1 의존
@@ -116,10 +116,10 @@ CREATE TABLE applications (
 ### T5. 신청 API와 저장 — P0, T4 의존
 - 파일: `functions/api/apply.ts`, `migrations/0001_applications.sql`, `wrangler.toml`
 - 산출: 서버 검증(위 계약), Turnstile 검증, honeypot, 횟수 제한, D1 저장, 담당자 알림 메일, 신청자 접수 확인 메일
-- 검증: `wrangler pages dev` + 테스트 스크립트(정상/필수 누락/유형 0개/잘못된 이메일/honeypot/연속 제출) 기대 코드 일치, D1 행 확인
+- 검증: `wrangler dev` + 테스트 스크립트(정상/필수 누락/유형 0개/잘못된 이메일/honeypot/연속 제출) 기대 코드 일치, D1 행 확인
 
 ### T6. 관리 화면 — P0, T5 의존
-- 파일: `functions/admin/*`, `src/pages/admin/index.astro`
+- 파일: `src/server/admin*.ts`, `src/worker.ts` 라우트
 - 산출: Cloudflare Access 보호, 목록·유형 필터, 상태·담당자 변경, CSV 내보내기, 개별 삭제, 보유기간 경과 표시
 - 검증: Access 미인증 요청 차단, CSV 열 구성 확인, 삭제 후 행 없음
 
@@ -129,7 +129,7 @@ CREATE TABLE applications (
 - 검증: 비개발자 1명이 안내서만 보고 소식 1건 게시 성공
 
 ### T8. 도메인·분석·운영 — P0, T1 이후 언제든
-- 산출: `itschool` CNAME → Pages, HTTPS 확인, Web Analytics, D1 정기 백업(내보내기) 절차
+- 산출: Worker Custom domain `itschool.ictact.kr`, HTTPS 확인, Web Analytics, D1 정기 백업(내보내기) 절차
 - 검증: `curl -I https://itschool.ictact.kr` 200 + 유효 인증서
 
 ### T9. 출시 점검 — T2~T8 완료 후

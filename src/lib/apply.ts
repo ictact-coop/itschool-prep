@@ -1,5 +1,5 @@
 // 참여 신청 데이터 계약. 브라우저(T4)와 서버 API(T5)가 같은 규칙을 쓴다.
-// 프레임워크 의존 없음: Pages Functions에서도 그대로 import 한다.
+// 프레임워크 의존 없음: Worker(src/worker.ts)에서도 그대로 import 한다.
 
 export const PARTICIPATION_TYPES = ['committee', 'education', 'tech', 'partner', 'sponsor', 'interest'] as const;
 export type ParticipationType = (typeof PARTICIPATION_TYPES)[number];

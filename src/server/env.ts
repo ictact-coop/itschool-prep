@@ -1,8 +1,9 @@
 /// <reference types="@cloudflare/workers-types" />
 
-/** Pages Functions 바인딩·환경변수. wrangler.toml 및 Cloudflare 대시보드와 일치해야 한다. */
+/** Worker 바인딩·환경변수. wrangler.toml 및 Cloudflare 대시보드와 일치해야 한다. */
 export interface Env {
   DB: D1Database;
+  ASSETS: Fetcher;
   SITE_URL?: string;
   /** 발신 주소. 비어 있으면 메일을 보내지 않는다. */
   MAIL_FROM?: string;
