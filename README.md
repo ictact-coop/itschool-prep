@@ -1,6 +1,6 @@
 # itschool-prep
 
-IT학교 설립추진위원회(가칭) 임시 웹사이트 — https://itschool.ictact.kr (공개 전)
+IT학교 설립준비위원회 임시 웹사이트 — https://itschool.ictact.kr (공개 전)
 
 - 개발계획: [docs/DEV_PLAN.md](docs/DEV_PLAN.md)
 - 스택: Astro(정적) · Cloudflare Workers(정적 자산 + Worker) · D1

@@ -66,7 +66,7 @@ export function receiptMail(env: Env, input: ApplyInput): Mail {
     text: [
       `${input.name} 님, 안녕하세요.`,
       '',
-      'IT학교 설립추진위원회(가칭)에 참여 의향을 남겨 주셔서 고맙습니다.',
+      'IT학교 설립준비위원회에 참여 의향을 남겨 주셔서 고맙습니다.',
       `선택하신 참여 방식: ${input.types.map(typeLabel).join(', ')}`,
       '',
       '담당자가 내용을 확인한 뒤 개별로 연락드리겠습니다.',
