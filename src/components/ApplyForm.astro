@@ -1,0 +1,267 @@
+---
+import ConsentSummary from './ConsentSummary.astro';
+import { participationTypes, join } from '../data/home';
+import { LIMITS } from '../lib/apply';
+---
+<div class="apply" data-apply>
+  <!-- JS가 없어도 일반 POST로 제출된다(T5에서 서버가 form 인코딩도 처리). -->
+  <form class="form" method="post" action="/api/apply" novalidate data-apply-form>
+    <p class="required-note"><span aria-hidden="true">*</span> 표시는 필수 항목입니다.</p>
+
+    <div class="row">
+      <div class="field">
+        <label for="f-name">이름 또는 활동명 <span class="req" aria-hidden="true">*</span></label>
+        <input id="f-name" name="name" type="text" autocomplete="name" required aria-required="true"
+          maxlength={LIMITS.name} placeholder="이름 또는 활동명" aria-describedby="e-name" />
+        <p class="error" id="e-name" data-error-for="name"></p>
+      </div>
+      <div class="field">
+        <label for="f-email">이메일 <span class="req" aria-hidden="true">*</span></label>
+        <input id="f-email" name="email" type="email" autocomplete="email" inputmode="email" required aria-required="true"
+          maxlength={LIMITS.email} placeholder="example@email.com" aria-describedby="h-email e-email" />
+        <p class="hint" id="h-email">접수 확인과 후속 연락에만 사용합니다.</p>
+        <p class="error" id="e-email" data-error-for="email"></p>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="f-affiliation">소속·활동분야 <span class="optional">(선택)</span></label>
+      <input id="f-affiliation" name="affiliation" type="text" autocomplete="organization"
+        maxlength={LIMITS.affiliation} placeholder="예: ○○시민단체 활동가, 프리랜서 개발자" aria-describedby="e-affiliation" />
+      <p class="error" id="e-affiliation" data-error-for="affiliation"></p>
+    </div>
+
+    <fieldset class="field types" id="f-types" aria-describedby="e-types" tabindex="-1">
+      <legend>관심 있는 참여 방식 <span class="optional">(복수 선택)</span> <span class="req" aria-hidden="true">*</span></legend>
+      <div class="checks">
+        {participationTypes.map((t) => (
+          <label class="check">
+            <input type="checkbox" name="types" value={t.value} />
+            <span>{t.label}</span>
+          </label>
+        ))}
+      </div>
+      <p class="error" id="e-types" data-error-for="types"></p>
+    </fieldset>
+
+    <div class="field">
+      <label for="f-message">남기고 싶은 이야기 <span class="optional">(선택)</span></label>
+      <textarea id="f-message" name="message" rows="4" maxlength={LIMITS.message}
+        placeholder="함께 만들고 싶은 배움이나 참여할 수 있는 활동을 적어 주세요." aria-describedby="e-message"></textarea>
+      <p class="error" id="e-message" data-error-for="message"></p>
+    </div>
+
+    <!-- 스팸 방지: 사람에게는 보이지 않는 칸 -->
+    <div class="hp" aria-hidden="true">
+      <label for="f-website">웹사이트</label>
+      <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <div class="consents">
+      <ConsentSummary />
+      <div class="field">
+        <label class="check">
+          <input id="f-privacyConsent" type="checkbox" name="privacyConsent" required aria-required="true" aria-describedby="e-privacyConsent" />
+          <span>개인정보 수집·이용에 동의합니다. <span class="req-text">(필수)</span></span>
+        </label>
+        <p class="error" id="e-privacyConsent" data-error-for="privacyConsent"></p>
+      </div>
+      <label class="check">
+        <input type="checkbox" name="newsOptIn" />
+        <span>설립 소식을 이메일로 받겠습니다. <span class="optional">(선택)</span></span>
+      </label>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn btn-primary" type="submit" data-submit>참여 의향 보내기</button>
+      <p class="status" role="status" aria-live="polite" data-status></p>
+    </div>
+    <p class="notice">※ {join.committeeNotice}</p>
+  </form>
+
+  <div class="done" data-done hidden>
+    <h4 tabindex="-1" data-done-title>참여 의향이 접수되었습니다</h4>
+    <p>남겨 주셔서 고맙습니다. 입력하신 이메일로 접수 확인을 보내 드리고, 담당자가 확인한 뒤 개별로 연락드리겠습니다.</p>
+    <button class="btn btn-outline" type="button" data-again>다른 신청 작성하기</button>
+  </div>
+</div>
+
+<script>
+  import { readApplyInput, validateApply, type ApplyErrors, type ApplyResponse } from '../lib/apply';
+
+  const root = document.querySelector<HTMLElement>('[data-apply]');
+  const form = root?.querySelector<HTMLFormElement>('[data-apply-form]');
+  if (root && form) {
+    const status = root.querySelector<HTMLElement>('[data-status]')!;
+    const submitBtn = root.querySelector<HTMLButtonElement>('[data-submit]')!;
+    const done = root.querySelector<HTMLElement>('[data-done]')!;
+    const doneTitle = root.querySelector<HTMLElement>('[data-done-title]')!;
+    const order = ['name', 'email', 'affiliation', 'types', 'message', 'privacyConsent'] as const;
+    const touched = new Set<string>();
+
+    const controlFor = (field: string): HTMLElement | null =>
+      field === 'types' ? form.querySelector('#f-types') : form.querySelector(`#f-${field}`);
+
+    function showErrors(errors: ApplyErrors, only?: Set<string>) {
+      for (const field of order) {
+        if (only && !only.has(field)) continue;
+        const msg = errors[field] ?? '';
+        const box = form!.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
+        if (box) box.textContent = msg;
+        const ctl = controlFor(field);
+        if (ctl) {
+          if (msg) ctl.setAttribute('aria-invalid', 'true');
+          else ctl.removeAttribute('aria-invalid');
+        }
+      }
+    }
+
+    // 입력 중에는 이미 건드린 칸만 다시 검사(처음부터 빨간 글씨를 띄우지 않음)
+    form.addEventListener('focusout', (ev) => {
+      const t = ev.target as HTMLInputElement;
+      if (t.name && t.name !== 'website') touched.add(t.name);
+    });
+    form.addEventListener('input', () => {
+      if (touched.size) showErrors(validateApply(readApplyInput(new FormData(form))), touched);
+    });
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const data = new FormData(form);
+      const errors = validateApply(readApplyInput(data));
+      order.forEach((f) => touched.add(f));
+      showErrors(errors);
+      const first = order.find((f) => errors[f]);
+      if (first) {
+        const n = Object.keys(errors).length;
+        status.textContent = `입력 내용을 확인해 주세요. 확인이 필요한 항목 ${n}개`;
+        status.dataset.tone = 'error';
+        const ctl = controlFor(first);
+        (first === 'types' ? ctl?.querySelector<HTMLInputElement>('input') : ctl)?.focus();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      status.dataset.tone = '';
+      status.textContent = '보내는 중입니다…';
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: data,
+          headers: { Accept: 'application/json' },
+        });
+        const body = (await res.json().catch(() => null)) as ApplyResponse | null;
+        if (res.ok && body?.ok) {
+          form.hidden = true;
+          done.hidden = false;
+          status.textContent = '';
+          doneTitle.focus();
+          return;
+        }
+        if (body && !body.ok && body.errors) {
+          showErrors(body.errors);
+          const f = order.find((k) => body.errors?.[k]);
+          if (f) controlFor(f)?.focus();
+        }
+        status.dataset.tone = 'error';
+        status.textContent =
+          res.status === 429
+            ? '짧은 시간에 여러 번 보내셨습니다. 잠시 후 다시 시도해 주세요.'
+            : body && !body.ok && body.message
+              ? body.message
+              : '전송하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      } catch {
+        status.dataset.tone = 'error';
+        status.textContent = '네트워크 연결을 확인한 뒤 다시 시도해 주세요.';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    root.querySelector('[data-again]')?.addEventListener('click', () => {
+      form.reset();
+      touched.clear();
+      showErrors({});
+      done.hidden = true;
+      form.hidden = false;
+      form.querySelector<HTMLInputElement>('#f-name')?.focus();
+    });
+
+    // 참여 카드 → 해당 유형 미리 선택
+    document.querySelectorAll<HTMLAnchorElement>('a[data-preselect]').forEach((a) => {
+      a.addEventListener('click', () => {
+        const types = (a.dataset.preselect ?? '').split(',');
+        form.querySelectorAll<HTMLInputElement>('input[name="types"]').forEach((cb) => {
+          if (types.includes(cb.value)) cb.checked = true;
+        });
+        if (touched.has('types')) showErrors(validateApply(readApplyInput(new FormData(form))), new Set(['types']));
+        requestAnimationFrame(() => form.querySelector<HTMLInputElement>('#f-name')?.focus({ preventScroll: true }));
+      });
+    });
+  }
+</script>
+
+<style>
+  .apply {
+    padding: var(--space-4);
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+  @media (min-width: 48rem) { .apply { padding: var(--space-6); } }
+  .form { display: grid; gap: var(--space-4); }
+  .row { display: grid; gap: var(--space-4); }
+  @media (min-width: 48rem) { .row { grid-template-columns: 1fr 1fr; } }
+
+  .field { display: grid; align-content: start; gap: var(--space-1); min-width: 0; }
+  label, legend { font-size: var(--text-sm); font-weight: 600; }
+  .req, .req-text { color: var(--color-error); }
+  .req-text { font-weight: 600; }
+  .optional { font-weight: 400; color: var(--color-text-muted); }
+  .required-note { font-size: var(--text-xs); color: var(--color-text-muted); }
+  .required-note span { color: var(--color-error); }
+
+  input[type='text'], input[type='email'], textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: var(--space-2) var(--space-3);
+    font: inherit;
+    font-size: var(--text-base); /* iOS 확대 방지 */
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid #a9b8b2;
+    border-radius: var(--radius-sm);
+  }
+  textarea { resize: vertical; }
+  ::placeholder { color: #6f7d78; }
+  input[aria-invalid='true'], textarea[aria-invalid='true'] { border-color: var(--color-error); border-width: 2px; }
+  input[type='checkbox'][aria-invalid='true'] { outline: 2px solid var(--color-error); outline-offset: 2px; }
+  .hint { font-size: var(--text-xs); color: var(--color-text-muted); }
+  .error { font-size: var(--text-xs); color: var(--color-error); font-weight: 600; }
+  .error:empty { display: none; }
+
+  fieldset { border: 0; margin: 0; padding: 0; }
+  fieldset:focus { outline: none; }
+  legend { padding: 0; margin-bottom: var(--space-2); }
+  fieldset[aria-invalid='true'] .checks { outline: 2px solid var(--color-error); outline-offset: 4px; border-radius: var(--radius-sm); }
+  .checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2) var(--space-4); }
+  @media (min-width: 48rem) { .checks { grid-template-columns: repeat(6, auto); justify-content: start; } }
+  .check {
+    display: flex; align-items: flex-start; gap: var(--space-2);
+    font-weight: 400; cursor: pointer; min-height: 1.75rem;
+  }
+  .check input { width: 1.125rem; height: 1.125rem; margin: 0.2rem 0 0; accent-color: var(--color-primary); flex: none; }
+
+  .consents { display: grid; gap: var(--space-3); }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  .submit-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+  .btn[disabled] { opacity: 0.6; cursor: progress; }
+  .status { font-size: var(--text-sm); }
+  .status[data-tone='error'] { color: var(--color-error); font-weight: 600; }
+  .notice { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  .done { display: grid; gap: var(--space-3); justify-items: start; }
+  .done h4 { font-size: var(--text-lg); margin: 0; }
+  .done h4:focus { outline: none; }
+</style>

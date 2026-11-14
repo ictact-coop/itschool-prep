@@ -13,4 +13,10 @@ export const site = {
     { href: '/#progress', label: '진행상황' },
   ],
   joinHref: '/#join',
+  // 개인정보 처리 기준(D3). 확정 전에는 null → "확정 후 게시"로 표시.
+  privacy: {
+    version: 'draft-2026-11-14', // 신청 시 함께 저장되는 처리방침 버전
+    controller: null as string | null, // 처리 책임자
+    retention: null as string | null, // 보유기간
+  },
 } as const;

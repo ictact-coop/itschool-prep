@@ -1,3 +1,5 @@
+import type { ParticipationType } from '../lib/apply';
+
 // 첫 화면 문구. 와이어프레임(2026-11-14) 기준.
 // 설립 단계는 src/content/steps.json, 준비 소식은 src/content/news/ 에서 관리한다.
 
@@ -36,17 +38,15 @@ export const progress = {
   statusLabel: { done: '완료', doing: '준비 중', planned: '예정' },
 } as const;
 
-// 참여유형 저장값(D4 A안: 6종). 화면 카드 4개는 이 값들의 묶음이다.
-export const participationTypes = [
+// 참여유형 저장값(D4 A안: 6종)은 src/lib/apply.ts. 화면 카드 4개는 이 값들의 묶음이다.
+export const participationTypes: { value: ParticipationType; label: string }[] = [
   { value: 'committee', label: '추진위원' },
   { value: 'education', label: '교육 협력' },
   { value: 'tech', label: '기술 협력' },
   { value: 'partner', label: '기관 협력' },
   { value: 'sponsor', label: '후원' },
   { value: 'interest', label: '일반 관심' },
-] as const;
-
-export type ParticipationType = (typeof participationTypes)[number]['value'];
+];
 
 export const join = {
   title: '함께 만들어갈 사람들을 찾습니다',

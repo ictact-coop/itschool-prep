@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import SectionHeader from '../components/SectionHeader.astro';
 import Icon from '../components/Icon.astro';
+import ApplyForm from '../components/ApplyForm.astro';
 import { hero, why, school, progress, join, experiments, news } from '../data/home';
 
 const steps = (await getCollection('steps')).sort((a, b) => a.data.order - b.data.order);
@@ -80,19 +81,19 @@ const latestNews = (await getCollection('news', ({ data }) => !data.draft))
       <SectionHeader id="join" title={join.title} lead={join.lead} />
       <ul class="grid grid-4 plain">
         {join.cards.map((card) => (
-          <li class="card join-card" data-types={card.types.join(',')}>
+          <li class="card join-card">
             <h3>{card.title}</h3>
             <p>{card.body}</p>
+            <a class="card-link" href="#apply" data-preselect={card.types.join(',')}>
+              이 방식으로 신청<span class="visually-hidden">: {card.title}</span> <span aria-hidden="true">→</span>
+            </a>
           </li>
         ))}
       </ul>
 
-      <div class="form-area" id="apply">
-        <h3 class="form-title">{join.formTitle}</h3>
-        <div class="form-box">
-          <p class="form-pending">참여 신청 폼을 준비하고 있습니다.</p>
-          <p class="notice">※ {join.committeeNotice}</p>
-        </div>
+      <div class="form-area">
+        <h3 class="form-title" id="apply">{join.formTitle}</h3>
+        <ApplyForm />
       </div>
     </div>
   </section>
@@ -193,15 +194,11 @@ const latestNews = (await getCollection('news', ({ data }) => !data.draft))
   /* 함께하기 */
   .form-area { margin-top: var(--space-6); display: grid; gap: var(--space-3); }
   .form-title { font-size: var(--text-lg); font-weight: 700; }
-  .form-box {
-    display: grid; gap: var(--space-3);
-    padding: var(--space-5);
-    background: var(--color-card);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+  .join-card .card-link {
+    margin-top: auto; padding-top: var(--space-2);
+    font-size: var(--text-sm); font-weight: 600; text-decoration: none;
   }
-  .form-pending { font-weight: 600; }
-  .notice { font-size: var(--text-xs); color: var(--color-text-muted); }
+  .join-card .card-link:hover { text-decoration: underline; }
 
   /* 기존 실험 */
   .exp-card { grid-template-columns: auto 1fr; align-items: center; gap: var(--space-4); }
