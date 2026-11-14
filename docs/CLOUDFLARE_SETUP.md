@@ -14,7 +14,7 @@
    - Build output directory: `dist`
 4. 첫 배포가 끝나면 `https://<프로젝트>.pages.dev` 미리보기 주소가 생긴다. 📨 이 주소를 알려준다.
 
-> 주의: `wrangler.toml`의 D1 ID가 아직 임시값이라 2단계 ID가 반영되기 전 배포는 실패할 수 있다. **2단계를 먼저 하고 ID를 전달**하면 순서 문제가 없다.
+> D1 Database ID는 `wrangler.toml`에 반영됨(2026-11-14).
 >
 > 저장소의 `wrangler.toml`이 바인딩·환경변수의 기준이 된다. 대시보드에서 바인딩이 읽기 전용으로 보이는 것은 정상이다.
 
