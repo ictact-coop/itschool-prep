@@ -16,6 +16,7 @@ function form(fields) {
 const valid = (email) => ({
   name: '홍길동', email, affiliation: '시민단체', types: ['tech', 'education'],
   message: '함께하고 싶습니다', privacyConsent: 'on', newsOptIn: 'on',
+  'cf-turnstile-response': 'pass-token',
 });
 async function post(fields, { json = true, ip = nextIp(), headers = {} } = {}) {
   const res = await fetch(`${BASE}/api/apply`, {
@@ -99,4 +100,23 @@ test('같은 IP 10분 내 6번째 → 429', async () => {
   const codes = [];
   for (let i = 0; i < 6; i++) codes.push((await post(valid(`rl${i}-${run}@ex.com`), { ip })).res.status);
   assert.deepEqual(codes, [201, 201, 201, 201, 201, 429]);
+});
+
+test('Turnstile 토큰 없음 → 403, 저장 안 함', async () => {
+  const email = `ts-none-${run}@ex.com`;
+  const { 'cf-turnstile-response': _, ...noToken } = valid(email);
+  const { res, body } = await post(noToken);
+  assert.equal(res.status, 403);
+  assert.match(body.message, /자동 입력 방지/);
+  assert.equal(db(`SELECT id FROM applications WHERE email='${email}'`).length, 0);
+});
+
+test('Turnstile 검증 실패 토큰 → 403', async () => {
+  const { res } = await post({ ...valid(`ts-bad-${run}@ex.com`), 'cf-turnstile-response': 'forged' });
+  assert.equal(res.status, 403);
+});
+
+test('Turnstile 다른 action 토큰 → 403', async () => {
+  const { res } = await post({ ...valid(`ts-act-${run}@ex.com`), 'cf-turnstile-response': 'other-action' });
+  assert.equal(res.status, 403);
 });

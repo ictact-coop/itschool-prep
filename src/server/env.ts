@@ -12,5 +12,7 @@ export interface Env {
   /** 비밀값 */
   RESEND_API_KEY?: string;
   TURNSTILE_SECRET?: string;
+  /** 테스트용 siteverify 주소 덮어쓰기. 운영에서는 비워 둔다. */
+  TURNSTILE_VERIFY_URL?: string;
   RATE_SALT?: string;
 }

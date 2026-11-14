@@ -26,14 +26,16 @@
   - CLI: `npx wrangler login` 후 `npm run db:migrate:remote`
 - 확인: `SELECT name FROM sqlite_master WHERE type='table';` → `applications`, `rate_hits`
 
-## 3. Turnstile (스팸 방지)
+## 3. Turnstile (스팸 방지) — Site key 반영 ✅, Secret 등록 필요
 
 1. Turnstile → **Add widget**
-   - Hostnames: `itschool.ictact.kr`, 1단계의 `itschool-prep.<계정>.workers.dev`
+   - Hostnames: `itschool.ictact.kr`, `itschool-prep.data-fc8.workers.dev`
    - Widget mode: **Managed**
 2. 📨 **Site key** → 개발 담당이 `.env.production`에 반영한다.
 3. 🔒 **Secret key** → Worker `itschool-prep` → Settings → Variables and Secrets → **Add** → Type: Secret
    - 이름 `TURNSTILE_SECRET`
+   - Secret이 없으면 서버 검증을 건너뛴다(위젯만 표시). **반드시 등록**한다.
+   - 위젯 action은 `apply`로 고정되어 있고, 서버는 action이 다른 토큰을 거부한다.
 
 ## 4. 횟수 제한용 salt
 
@@ -77,8 +79,8 @@ SELECT created_at, name, email, types, status FROM applications ORDER BY created
 | 구분 | 항목 | 상태 |
 |---|---|---|
 | 📨 | D1 Database ID | ✅ 반영 |
-| 📨 | workers.dev 주소 | |
-| 📨 | Turnstile Site key | |
+| 📨 | workers.dev 주소 | ✅ itschool-prep.data-fc8.workers.dev |
+| 📨 | Turnstile Site key | ✅ `.env.production` |
 | 📨 | MAIL_FROM, NOTIFY_TO | |
 | 🔒 | D1 테이블 생성(마이그레이션) | |
 | 🔒 | TURNSTILE_SECRET | |
