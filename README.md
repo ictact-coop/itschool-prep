@@ -3,6 +3,7 @@
 IT학교 설립준비위원회 임시 웹사이트 — https://itschool.ictact.kr (공개 전)
 
 - 개발계획: [docs/DEV_PLAN.md](docs/DEV_PLAN.md)
+- **내용 고치기(비개발자용): [docs/EDITING.md](docs/EDITING.md)** — 준비 소식, 설립 단계
 - 스택: Astro(정적) · Cloudflare Workers(정적 자산 + Worker) · D1
 - Cloudflare 설정: [docs/CLOUDFLARE_SETUP.md](docs/CLOUDFLARE_SETUP.md)
 
@@ -31,6 +32,6 @@ npm run worker:dev   # 빌드 후 http://localhost:8788
 - `src/lib/apply.ts` 신청 데이터 계약·검증(브라우저와 서버 공용)
 - `src/worker.ts` Worker 진입점(`/api/apply`), `src/server/` 서버 로직
 - `migrations/` D1 스키마
-- `src/content/` 설립 단계·준비 소식
+- `src/content/steps.yaml` 설립 단계, `src/content/news/*.md` 준비 소식(`/news`, 본문 있으면 `/news/<파일이름>`)
 
 시범 공개 전까지 `public/robots.txt`로 검색 노출을 막는다(T9에서 해제).

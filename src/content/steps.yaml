@@ -1,0 +1,31 @@
+# 설립 진행상황. 첫 화면 "IT학교 설립, 어디까지 왔을까요?"에 이 순서대로 표시된다.
+# 고치는 방법: docs/EDITING.md 의 "설립 단계 바꾸기"
+#
+# status 값은 아래 셋 중 하나만 쓴다.
+#   done    → 완료   (확인된 사실만)
+#   doing   → 준비 중
+#   planned → 예정
+
+- id: idea
+  order: 1
+  title: 구상과 실험
+  summary: 공동체IT의 교육·진단 실험 경험
+  status: done
+
+- id: board
+  order: 2
+  title: 이사회 승인
+  summary: 독립 설립 추진 방향 승인
+  status: done
+
+- id: committee
+  order: 3
+  title: 추진위원 모집
+  summary: 발기인과 공동 설립 주체 구성
+  status: doing
+
+- id: founding
+  order: 4
+  title: 창립과 교육 시작
+  summary: 총회·고유번호·시범교육
+  status: planned
