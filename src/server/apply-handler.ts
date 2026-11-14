@@ -39,7 +39,10 @@ export async function handleApply(request: Request, env: Env, ctx: Waiter): Prom
   const ip = request.headers.get('CF-Connecting-IP') ?? '0.0.0.0';
   if (env.TURNSTILE_SECRET) {
     const token = form.get('cf-turnstile-response');
-    if (typeof token !== 'string' || !(await verifyTurnstile(env.TURNSTILE_SECRET, token, ip))) {
+    if (typeof token !== 'string' || !token) {
+      return reply(403, { ok: false, message: '자동 입력 방지 확인을 완료한 뒤 다시 보내 주세요.' });
+    }
+    if (!(await verifyTurnstile(env, token, ip))) {
       return reply(403, { ok: false, message: '자동 입력 방지 확인에 실패했습니다. 새로고침 후 다시 시도해 주세요.' });
     }
   }
@@ -116,16 +119,28 @@ function htmlFallback(status: number, body: ApplyResponse, env: Env): Response {
   return new Response(html, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 
-async function verifyTurnstile(secret: string, token: string, ip: string): Promise<boolean> {
+export const TURNSTILE_ACTION = 'apply';
+const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+
+/** 서버 측 토큰 검증. 성공 여부와 함께 위젯 action이 'apply'인지 확인한다(다른 위젯 토큰 재사용 방지). */
+async function verifyTurnstile(env: Env, token: string, ip: string): Promise<boolean> {
+  if (token.length > 2048) return false;
   const body = new FormData();
-  body.append('secret', secret);
+  body.append('secret', env.TURNSTILE_SECRET!);
   body.append('response', token);
   body.append('remoteip', ip);
   try {
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body });
-    const data = (await res.json()) as { success?: boolean };
-    return data.success === true;
-  } catch {
+    const res = await fetch(env.TURNSTILE_VERIFY_URL || TURNSTILE_VERIFY_URL, { method: 'POST', body });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { success?: boolean; action?: string; 'error-codes'?: string[] };
+    if (data.success !== true) {
+      console.warn('turnstile rejected', data['error-codes']);
+      return false;
+    }
+    // 테스트 키는 action을 비워 응답하므로, 값이 있을 때만 비교한다
+    return !data.action || data.action === TURNSTILE_ACTION;
+  } catch (err) {
+    console.error('turnstile error', err);
     return false;
   }
 }
