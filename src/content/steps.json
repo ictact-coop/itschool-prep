@@ -1,0 +1,6 @@
+[
+  { "id": "idea", "order": 1, "title": "구상과 실험", "summary": "공동체IT의 교육·진단 실험 경험", "status": "done" },
+  { "id": "board", "order": 2, "title": "이사회 승인", "summary": "독립 설립 추진 방향 승인", "status": "done" },
+  { "id": "committee", "order": 3, "title": "추진위원 모집", "summary": "발기인과 공동 설립 주체 구성", "status": "doing" },
+  { "id": "founding", "order": 4, "title": "창립과 교육 시작", "summary": "총회·고유번호·시범교육", "status": "planned" }
+]
