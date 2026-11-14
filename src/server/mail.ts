@@ -10,7 +10,7 @@ interface Mail { to: string[]; subject: string; text: string; replyTo?: string }
 export async function sendMail(env: Env, mail: Mail): Promise<'sent' | 'skipped' | 'failed'> {
   if (!env.RESEND_API_KEY || !env.MAIL_FROM || mail.to.length === 0) return 'skipped';
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch(env.RESEND_API_URL || 'https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -60,7 +60,8 @@ export function notifyMail(env: Env, input: ApplyInput, id: string, updated: boo
 export function receiptMail(env: Env, input: ApplyInput): Mail {
   return {
     to: [input.email],
-    replyTo: (env.NOTIFY_TO ?? '').split(',')[0]?.trim() || undefined,
+    // 담당자 개인 주소가 신청자에게 노출되지 않도록 공용 발신 주소로 회신받는다
+    replyTo: addressOf(env.MAIL_FROM),
     subject: 'IT학교 참여 의향이 접수되었습니다',
     text: [
       `${input.name} 님, 안녕하세요.`,
@@ -75,4 +76,11 @@ export function receiptMail(env: Env, input: ApplyInput): Mail {
       `개인정보 처리방침: ${(env.SITE_URL ?? '').replace(/\/$/, '')}/privacy`,
     ].join('\n'),
   };
+}
+
+/** "이름 <a@b.c>" 또는 "a@b.c"에서 주소만 꺼낸다. */
+export function addressOf(from?: string): string | undefined {
+  if (!from) return undefined;
+  const m = /<([^>]+)>/.exec(from);
+  return (m ? m[1] : from).trim() || undefined;
 }
