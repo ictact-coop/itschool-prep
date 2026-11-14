@@ -1,0 +1,31 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base>
+  <!-- T2에서 9개 섹션으로 교체. 앵커 대상은 미리 둔다. -->
+  <section class="placeholder container">
+    <p class="badge">설립 준비 중 · 시민과 함께 만드는 새로운 배움</p>
+    <h1>기술을 배우는 것을 넘어,<br />함께 만들어가는 IT학교</h1>
+    <p class="lead">사이트를 준비하고 있습니다.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="#join">학교 설립에 함께하기</a>
+      <a class="btn btn-outline" href="#why">IT학교 알아보기</a>
+    </div>
+  </section>
+  <div id="why"></div>
+  <div id="progress"></div>
+  <div id="join"></div>
+</Base>
+
+<style>
+  .placeholder {
+    display: grid;
+    gap: var(--space-4);
+    padding-block: var(--space-8);
+    background: var(--color-hero-bg);
+  }
+  .badge { font-size: var(--text-xs); color: var(--color-primary); font-weight: 600; }
+  h1 { font-size: var(--text-hero); }
+  .lead { color: var(--color-text-muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+</style>

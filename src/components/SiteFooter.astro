@@ -1,0 +1,32 @@
+---
+import { site } from '../site';
+---
+<footer class="site-footer">
+  <div class="container inner">
+    <p class="org">{site.org}</p>
+    <p>{site.orgStatus} · 창립 협력기관: {site.partner}</p>
+    <p class="meta">
+      <span>예정 주소: {site.url.replace('https://', '')}</span>
+      <span>연락처: {site.contactEmail
+        ? <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
+        : '확정 후 게시'}</span>
+      <a href="/privacy">개인정보 처리방침</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--color-footer-bg);
+    color: var(--color-footer-text);
+    font-size: var(--text-xs);
+  }
+  .inner {
+    display: grid;
+    gap: var(--space-2);
+    padding-block: var(--space-6);
+  }
+  .org { font-weight: 700; font-size: var(--text-sm); }
+  a { color: #fff; }
+  .meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+</style>
