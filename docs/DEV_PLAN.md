@@ -84,7 +84,7 @@ CREATE TABLE applications (
 
 ### T1. 프로젝트 기반과 미리보기 배포 — P0
 - 파일: `package.json`, `astro.config.mjs`, `src/styles/tokens.css`, `src/layouts/Base.astro`
-- 산출: 디자인 토큰(녹색 계열 주색, 회녹 배경, 카드 반경), 기본 레이아웃, Pages 미리보기 URL
+- 산출: 디자인 토큰(녹색 계열 주색, 회녹 배경, 카드 반경), 기본 레이아웃, Pages 미리보기 URL (Git 연동은 Cloudflare 계정 소유자가 연결)
 - 검증: `npm run build` 성공, 미리보기 URL 200
 
 ### T2. 랜딩 9개 섹션(정적) — P0, T1 의존
@@ -141,7 +141,7 @@ CREATE TABLE applications (
 | D1 | 폼 저장 방식 | **확정: Cloudflare D1 직접 저장** (2026-11-14) | T5, T6 |
 | D2 | ictact.kr DNS 관리 주체·접근 권한 | Cloudflare로 CNAME 추가 | T8 |
 | D3 | 공식 연락 이메일, 개인정보 처리 책임자, 보유기간 | 처리 완료 후 1년 또는 철회 시 즉시 삭제 | T3, T5 |
-| D4 | 참여유형 분류 | 저장 6종 / 화면 카드 4종 | T4, T5 |
+| D4 | 참여유형 분류 | **확정(A안): 저장·체크박스 6종 / 화면 카드 4종** (2026-11-14) | T4, T5 |
 | D5 | 헤더 메뉴 명칭 | "소개 · 진행상황 · 함께하기" | T2 |
 | D6 | 기존 실험 카드 외부 링크 | 공개 가능한 것만 링크 | T2 |
 | D7 | 코드 저장소 | **확정: `ictact-coop/itschool-prep`** | T1, T7 |

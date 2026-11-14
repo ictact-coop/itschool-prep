@@ -1,0 +1,66 @@
+---
+import { site } from '../site';
+---
+<header class="site-header">
+  <div class="container inner">
+    <a class="brand" href="/" aria-label={`${site.name} 첫 화면`}>
+      <span class="brand-name">{site.name}</span>
+      <span class="brand-sub">설립추진위원회(가칭)</span>
+    </a>
+    <nav aria-label="주요 메뉴">
+      <ul>
+        {site.nav.map((item) => (
+          <li class="nav-text"><a href={item.href}>{item.label}</a></li>
+        ))}
+        <li><a class="btn btn-primary" href={site.joinHref}>함께하기</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: var(--header-h);
+  }
+  .brand {
+    display: flex;
+    flex-direction: column;
+    color: var(--color-text);
+    text-decoration: none;
+    line-height: 1.2;
+  }
+  .brand-name { font-size: var(--text-lg); font-weight: 800; }
+  .brand-sub { font-size: 0.6875rem; color: var(--color-text-muted); }
+  ul {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .nav-text a {
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    padding: var(--space-2) 0;
+  }
+  .nav-text a:hover { color: var(--color-primary); text-decoration: underline; }
+  .btn { min-height: 2.5rem; padding-inline: var(--space-4); }
+
+  /* 모바일 와이어프레임: 로고 + 함께하기 버튼만 표시 */
+  @media (max-width: 39.99rem) {
+    .nav-text { display: none; }
+  }
+</style>
