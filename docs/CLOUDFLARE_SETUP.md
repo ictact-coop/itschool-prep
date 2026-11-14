@@ -72,35 +72,61 @@ SELECT created_at, name, email, types, status FROM applications ORDER BY created
 
 ## 7. 관리 화면(/admin) — Cloudflare Access
 
-관리 화면은 Access 로그인을 통과한 사람만 쓸 수 있다. Worker도 Access 토큰을 다시 검증하므로,
-아래 두 값이 `wrangler.toml`에 들어가기 전까지 `/admin`은 503으로 잠겨 있다.
+Cloudflare 공식 문서(2026-11 기준)를 따른 절차다.
+관리 화면은 Access 로그인을 통과한 사람만 쓸 수 있다. Worker도 Access 토큰을 다시 검증하므로
+아래 4단계의 두 값이 `wrangler.toml`에 들어가기 전까지 `/admin`은 503으로 잠겨 있다.
 
-1. **D1에 컬럼 추가(한 번만)**: D1 → `itschool-prep` → Console에서 `migrations/0002_admin_audit.sql` 실행
-   ```sql
-   ALTER TABLE applications ADD COLUMN admin_updated_at TEXT;
-   ALTER TABLE applications ADD COLUMN admin_updated_by TEXT;
-   ```
-2. Zero Trust(처음이면 팀 이름을 정하고 Free 플랜 선택) → Access → Applications → **Add an application → Self-hosted**
-   - Application name: `IT학교 신청 관리`
-   - Session duration: 24 hours
-   - Public hostname: `itschool-prep.data-fc8.workers.dev`, Path: `admin`
-   - Public hostname 추가: 같은 호스트, Path: `admin/*`
-   - (도메인 연결 후 T8에서 `itschool.ictact.kr`의 같은 두 경로도 추가)
-3. Policy: Action **Allow**, Include → **Emails** → 관리 담당자 이메일들 (예: `itschool@ictact.kr`와 담당자 개인 주소)
-   - 로그인 방식은 기본 **One-time PIN**(이메일로 받은 코드 입력)이면 충분하다.
-4. 📨 개발 담당에게 전달 → `wrangler.toml`에 반영
-   - **Team domain**: Zero Trust → Settings → Custom Pages 등에 보이는 `https://<팀이름>.cloudflareaccess.com`
-   - **Application Audience (AUD) Tag**: 만든 애플리케이션 → Overview(또는 Basic information)에 있는 64자 값
-   - 두 값은 비밀이 아니다(토큰 검증용 공개 식별자).
-5. 반영·배포 후 `https://itschool-prep.data-fc8.workers.dev/admin` 접속 → Access 로그인 → 신청 목록 확인
+> ⚠️ Worker 화면의 **Access 탭(Protect this Worker behind Access)** 은 쓰지 않는다.
+> 이 기능은 Worker 전체(공개 첫 화면·신청 폼 포함)를 잠근다. "All traffic"을 고르면 일반 방문자가 사이트를 볼 수 없다.
+> 이미 켜 두었다면 Previews only인지 확인하거나 끈다.
+> 우리는 `/admin` 경로만 잠그는 **Self-hosted 애플리케이션**을 쓴다.
+> (정적 자산을 쓰는 Worker에는 `ctx.access`가 전달되지 않아, Worker에서 JWT를 직접 검증하는 방식이 맞다.)
+
+1. **D1 컬럼 추가** ✅ (2026-11-14 완료)
+
+2. **Zero Trust 준비(처음 한 번)**
+   - 대시보드 왼쪽 **Zero Trust** → 팀 이름을 정하고 **Free** 플랜 선택(결제수단 등록을 요구할 수 있으나 무료)
+   - 로그인 방법: **Zero Trust → Settings → Authentication → Login methods** 에 **One-time PIN** 이 있는지 확인(기본 제공)
+
+3. **애플리케이션 만들기**: **Zero Trust → Access controls → Applications → Create new application → Self-hosted and private**
+   1. Application name: `IT학교 신청 관리`
+   2. **Add public hostname** 을 눌러 아래 4개를 추가한다(경로 `admin/*`는 `/admin` 자체를 포함하지 않으므로 둘 다 필요).
+
+      | Subdomain | Domain | Path |
+      |---|---|---|
+      | `itschool` | `ictact.kr` | `admin` |
+      | `itschool` | `ictact.kr` | `admin/*` |
+      | (Switch to custom input) `itschool-prep.data-fc8.workers.dev` | | `admin` |
+      | (Switch to custom input) `itschool-prep.data-fc8.workers.dev` | | `admin/*` |
+
+      workers.dev는 도메인 목록에 없으므로 **Switch to custom input** 으로 직접 입력한다.
+      입력이 막히면 workers.dev 두 줄은 빼도 된다(그 주소의 /admin은 계속 잠긴 채로 남는다).
+   3. **Access policies** → Create new policy
+      - Policy name: `신청 관리 담당자`, Action: **Allow**
+      - Include → Selector **Emails** → 담당자 주소들(예: `itschool@ictact.kr`, 담당자 개인 주소)
+   4. Login methods: **One-time PIN** 선택
+   5. Session Duration: `24 hours`
+   6. **Create**
+
+4. **두 값 확인 → 개발 담당에게 전달**(비밀 아님)
+   - **Team domain**: **Zero Trust → Settings** 에 표시되는 `https://<팀이름>.cloudflareaccess.com`
+   - **AUD Tag**: **Zero Trust → Access controls → Applications** → `IT학교 신청 관리`의 **Edit** → **Additional settings** 탭 → **Application Audience (AUD) Tag**(64자)
+   - 못 찾으면 애플리케이션을 만든 것만 알려 주면 된다. 개발 담당이 `/admin` 로그인 이동 주소에서 두 값을 확인할 수 있다.
+
+5. 반영·배포 후 `https://itschool.ictact.kr/admin` → 이메일 입력 → 받은 PIN 입력 → 신청 목록 확인
 
 관리 화면 기능: 목록·검색·참여 방식/상태 필터, 상태(신규·담당 지정·연락 완료·종료)·담당자·메모 저장(변경자·시각 기록),
 신청 삭제(철회 요청 처리), CSV 내보내기(엑셀에서 한글이 깨지지 않도록 BOM 포함).
 
+참고 문서
+- Workers와 Access: https://developers.cloudflare.com/workers/configuration/cloudflare-access/
+- Self-hosted 애플리케이션: https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/
+- 경로 규칙: https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/
+- JWT 검증·AUD 위치: https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/
+
 ## 이후 단계
 
-- T8 도메인: Worker → Settings → Domains & Routes → Custom domain `itschool.ictact.kr`
-  (ictact.kr가 Cloudflare DNS에 있어야 한다. 아니면 DNS 관리 방식을 먼저 정한다)
+- T8 도메인: `itschool.ictact.kr` 연결 완료 ✅ (2026-11-14 확인: workers.dev와 같은 Worker, HTTPS 정상). 추가 DNS 작업 없음
 - T8 분석: Web Analytics 활성화
 
 ## 전달 체크리스트
@@ -116,5 +142,6 @@ SELECT created_at, name, email, types, status FROM applications ORDER BY created
 | 🔒 | TURNSTILE_SECRET | ✅ |
 | 🔒 | RATE_SALT | ✅ |
 | 🔒 | RESEND_API_KEY | ✅ |
-| 🔒 | D1 `0002_admin_audit.sql` 실행 | |
+| 🔒 | D1 `0002_admin_audit.sql` 실행 | ✅ |
 | 📨 | Access Team domain, AUD Tag | |
+| — | 커스텀 도메인 itschool.ictact.kr | ✅ 연결됨 |
