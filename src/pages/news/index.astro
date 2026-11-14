@@ -1,0 +1,22 @@
+---
+import Base from '../../layouts/Base.astro';
+import NewsList from '../../components/NewsList.astro';
+import { getPublishedNews } from '../../lib/news';
+import { news } from '../../data/home';
+const items = await getPublishedNews();
+---
+<Base title={news.title} description={news.lead}>
+  <section class="container page">
+    <p class="crumb"><a href="/#news">← 첫 화면</a></p>
+    <h1>{news.title}</h1>
+    <p class="lead">{news.lead}</p>
+    {items.length ? <NewsList items={items} showDate /> : <p>아직 게시된 소식이 없습니다.</p>}
+  </section>
+</Base>
+
+<style>
+  .page { display: grid; gap: var(--space-4); padding-block: var(--space-7) var(--space-8); }
+  h1 { font-size: var(--text-2xl); }
+  .lead { color: var(--color-text-muted); }
+  .crumb { font-size: var(--text-sm); }
+</style>
