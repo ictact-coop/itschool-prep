@@ -1,31 +1,226 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import Icon from '../components/Icon.astro';
+import { hero, why, school, progress, join, experiments, news } from '../data/home';
+
+const steps = (await getCollection('steps')).sort((a, b) => a.data.order - b.data.order);
+const latestNews = (await getCollection('news', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime() || a.id.localeCompare(b.id))
+  .slice(0, news.limit);
 ---
 <Base>
-  <!-- T2에서 9개 섹션으로 교체. 앵커 대상은 미리 둔다. -->
-  <section class="placeholder container">
-    <p class="badge">설립 준비 중 · 시민과 함께 만드는 새로운 배움</p>
-    <h1>기술을 배우는 것을 넘어,<br />함께 만들어가는 IT학교</h1>
-    <p class="lead">사이트를 준비하고 있습니다.</p>
-    <div class="actions">
-      <a class="btn btn-primary" href="#join">학교 설립에 함께하기</a>
-      <a class="btn btn-outline" href="#why">IT학교 알아보기</a>
+  <!-- 02 첫 화면 -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero-inner">
+      <p class="hero-badge"><span class="dot" aria-hidden="true"></span>{hero.badge}</p>
+      <h1 id="hero-title">
+        {hero.titleLines.map((line, i) => <>{i > 0 && <br />}<span>{line}</span></>)}
+      </h1>
+      <p class="hero-lead">{hero.lead}</p>
+      <div class="actions">
+        <a class="btn btn-primary" href={hero.primary.href}>{hero.primary.label}</a>
+        <a class="btn btn-outline" href={hero.secondary.href}>{hero.secondary.label}</a>
+      </div>
     </div>
   </section>
-  <div id="why"></div>
-  <div id="progress"></div>
-  <div id="join"></div>
+
+  <!-- 03 왜 필요한가 -->
+  <section class="section" aria-labelledby="why">
+    <div class="container">
+      <SectionHeader id="why" title={why.title} lead={why.lead} />
+      <ol class="grid grid-3 plain">
+        {why.items.map((item, i) => (
+          <li class="card">
+            <span class="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- 04 만들고 싶은 학교 -->
+  <section class="section" aria-labelledby="school">
+    <div class="container">
+      <SectionHeader id="school" title={school.title} lead={school.lead} />
+      <ul class="grid grid-4 plain">
+        {school.items.map((item) => (
+          <li class="card">
+            <span class="icon"><Icon name={item.icon} size={18} /></span>
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- 05 설립 진행상황 -->
+  <section class="section" aria-labelledby="progress">
+    <div class="container">
+      <SectionHeader id="progress" title={progress.title} lead={progress.lead} />
+      <ol class="steps plain">
+        {steps.map((step) => (
+          <li class={`step step-${step.data.status}`}>
+            <span class={`status status-${step.data.status}`}>{progress.statusLabel[step.data.status]}</span>
+            <h3>{step.data.title}</h3>
+            <p>{step.data.summary}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- 06 함께하기 -->
+  <section class="section" aria-labelledby="join">
+    <div class="container">
+      <SectionHeader id="join" title={join.title} lead={join.lead} />
+      <ul class="grid grid-4 plain">
+        {join.cards.map((card) => (
+          <li class="card join-card" data-types={card.types.join(',')}>
+            <h3>{card.title}</h3>
+            <p>{card.body}</p>
+          </li>
+        ))}
+      </ul>
+
+      <div class="form-area" id="apply">
+        <h3 class="form-title">{join.formTitle}</h3>
+        <div class="form-box">
+          <p class="form-pending">참여 신청 폼을 준비하고 있습니다.</p>
+          <p class="notice">※ {join.committeeNotice}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 기존 실험 -->
+  <section class="section" aria-labelledby="experiments">
+    <div class="container">
+      <SectionHeader id="experiments" title={experiments.title} lead={experiments.lead} />
+      <ul class="grid grid-3 plain">
+        {experiments.items.map((item) => (
+          <li class="card exp-card">
+            <span class="exp-icon"><Icon name={item.icon} size={22} /></span>
+            <div>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- 08 준비 소식 -->
+  <section class="section" aria-labelledby="news">
+    <div class="container">
+      <SectionHeader id="news" title={news.title} lead={news.lead} />
+      <ul class="news-list plain">
+        {latestNews.map((item) => (
+          <li>
+            <span class="news-title">{item.data.title}</span>
+            <span class="news-label">{item.data.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
 </Base>
 
 <style>
-  .placeholder {
-    display: grid;
-    gap: var(--space-4);
-    padding-block: var(--space-8);
-    background: var(--color-hero-bg);
+  .plain { list-style: none; margin: 0; padding: 0; }
+
+  /* 첫 화면 */
+  .hero { background: linear-gradient(160deg, var(--color-hero-bg), #f3f9f6); }
+  .hero-inner { display: grid; gap: var(--space-4); padding-block: var(--space-7) var(--space-8); }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font-size: var(--text-xs); font-weight: 600; color: var(--color-primary);
   }
-  .badge { font-size: var(--text-xs); color: var(--color-primary); font-weight: 600; }
-  h1 { font-size: var(--text-hero); }
-  .lead { color: var(--color-text-muted); }
-  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-primary); flex: none; }
+  h1 { font-size: var(--text-hero); font-weight: 800; letter-spacing: -0.02em; }
+  h1 span { display: inline-block; }
+  .hero-lead { max-width: 40rem; color: var(--color-text-muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); }
+
+  /* 섹션 공통 */
+  .section { padding-block: var(--space-7); border-top: 1px solid var(--color-border); }
+  .hero + .section { border-top: 0; }
+  .grid { display: grid; gap: var(--space-3); }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 48rem) {
+    .section { padding-block: var(--space-8); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  .card {
+    display: grid; align-content: start; gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+  }
+  @media (min-width: 48rem) { .card { padding: var(--space-5); } }
+  .card h3 { font-size: var(--text-base); font-weight: 700; }
+  .card p { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .num { font-size: var(--text-xs); font-weight: 700; color: var(--color-primary); }
+  .icon { color: var(--color-primary); }
+
+  /* 진행상황 */
+  .steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-3); }
+  @media (min-width: 48rem) { .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .step { display: grid; align-content: start; gap: var(--space-2); padding-top: var(--space-4); border-top: 3px solid var(--color-border); }
+  .step-done { border-top-color: var(--color-primary); }
+  .step h3 { font-size: var(--text-base); font-weight: 700; }
+  .step p { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .status {
+    justify-self: start;
+    padding: 0.125rem var(--space-2);
+    border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .status-done { background: var(--status-done-bg); color: var(--status-done-text); }
+  .status-doing { background: var(--status-doing-bg); color: var(--status-doing-text); }
+  .status-planned { background: var(--status-plan-bg); color: var(--status-plan-text); }
+
+  /* 함께하기 */
+  .form-area { margin-top: var(--space-6); display: grid; gap: var(--space-3); }
+  .form-title { font-size: var(--text-lg); font-weight: 700; }
+  .form-box {
+    display: grid; gap: var(--space-3);
+    padding: var(--space-5);
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+  .form-pending { font-weight: 600; }
+  .notice { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  /* 기존 실험 */
+  .exp-card { grid-template-columns: auto 1fr; align-items: center; gap: var(--space-4); }
+  .exp-icon {
+    display: grid; place-items: center;
+    width: 3rem; height: 3rem;
+    border-radius: var(--radius-md);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+  }
+
+  /* 준비 소식 */
+  .news-list li {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline;
+    gap: var(--space-1) var(--space-4);
+    padding-block: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .news-list li:first-child { border-top: 1px solid var(--color-border); }
+  .news-title { font-weight: 600; }
+  .news-label { font-size: var(--text-xs); color: var(--color-text-muted); }
 </style>
