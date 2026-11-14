@@ -70,9 +70,35 @@ workers.dev 주소에서 신청을 한 번 넣어 보고 D1 Console에서 확인
 SELECT created_at, name, email, types, status FROM applications ORDER BY created_at DESC LIMIT 5;
 ```
 
+## 7. 관리 화면(/admin) — Cloudflare Access
+
+관리 화면은 Access 로그인을 통과한 사람만 쓸 수 있다. Worker도 Access 토큰을 다시 검증하므로,
+아래 두 값이 `wrangler.toml`에 들어가기 전까지 `/admin`은 503으로 잠겨 있다.
+
+1. **D1에 컬럼 추가(한 번만)**: D1 → `itschool-prep` → Console에서 `migrations/0002_admin_audit.sql` 실행
+   ```sql
+   ALTER TABLE applications ADD COLUMN admin_updated_at TEXT;
+   ALTER TABLE applications ADD COLUMN admin_updated_by TEXT;
+   ```
+2. Zero Trust(처음이면 팀 이름을 정하고 Free 플랜 선택) → Access → Applications → **Add an application → Self-hosted**
+   - Application name: `IT학교 신청 관리`
+   - Session duration: 24 hours
+   - Public hostname: `itschool-prep.data-fc8.workers.dev`, Path: `admin`
+   - Public hostname 추가: 같은 호스트, Path: `admin/*`
+   - (도메인 연결 후 T8에서 `itschool.ictact.kr`의 같은 두 경로도 추가)
+3. Policy: Action **Allow**, Include → **Emails** → 관리 담당자 이메일들 (예: `itschool@ictact.kr`와 담당자 개인 주소)
+   - 로그인 방식은 기본 **One-time PIN**(이메일로 받은 코드 입력)이면 충분하다.
+4. 📨 개발 담당에게 전달 → `wrangler.toml`에 반영
+   - **Team domain**: Zero Trust → Settings → Custom Pages 등에 보이는 `https://<팀이름>.cloudflareaccess.com`
+   - **Application Audience (AUD) Tag**: 만든 애플리케이션 → Overview(또는 Basic information)에 있는 64자 값
+   - 두 값은 비밀이 아니다(토큰 검증용 공개 식별자).
+5. 반영·배포 후 `https://itschool-prep.data-fc8.workers.dev/admin` 접속 → Access 로그인 → 신청 목록 확인
+
+관리 화면 기능: 목록·검색·참여 방식/상태 필터, 상태(신규·담당 지정·연락 완료·종료)·담당자·메모 저장(변경자·시각 기록),
+신청 삭제(철회 요청 처리), CSV 내보내기(엑셀에서 한글이 깨지지 않도록 BOM 포함).
+
 ## 이후 단계
 
-- T6 관리 화면: Zero Trust → Access로 `/admin` 보호(허용 이메일 목록)
 - T8 도메인: Worker → Settings → Domains & Routes → Custom domain `itschool.ictact.kr`
   (ictact.kr가 Cloudflare DNS에 있어야 한다. 아니면 DNS 관리 방식을 먼저 정한다)
 - T8 분석: Web Analytics 활성화
@@ -85,8 +111,10 @@ SELECT created_at, name, email, types, status FROM applications ORDER BY created
 | 📨 | workers.dev 주소 | ✅ itschool-prep.data-fc8.workers.dev |
 | 📨 | Turnstile Site key | ✅ `.env.production` |
 | 📨 | MAIL_FROM | ✅ `wrangler.toml` |
-| 🔒 | NOTIFY_TO | |
-| 🔒 | D1 테이블 생성(마이그레이션) | |
-| 🔒 | TURNSTILE_SECRET | |
-| 🔒 | RATE_SALT | |
-| 🔒 | RESEND_API_KEY | |
+| 🔒 | NOTIFY_TO | ✅ |
+| 🔒 | D1 테이블 생성(마이그레이션) | ✅ |
+| 🔒 | TURNSTILE_SECRET | ✅ |
+| 🔒 | RATE_SALT | ✅ |
+| 🔒 | RESEND_API_KEY | ✅ |
+| 🔒 | D1 `0002_admin_audit.sql` 실행 | |
+| 📨 | Access Team domain, AUD Tag | |
