@@ -25,7 +25,8 @@ database_id = "7a02b40b-78bc-4aca-9fe2-8a2fbdd11274"
 migrations_dir = "migrations"
 
 [vars]
-# 아래 둘은 정해지면 채운다. 비어 있으면 메일을 보내지 않는다.
-MAIL_FROM = ""        # 예: "IT학교 설립추진위원회 <noreply@itschool.ictact.kr>"
-NOTIFY_TO = ""        # 담당자 수신 주소(쉼표로 여러 개)
+# 발신 주소. 신청자 접수 확인 메일의 회신 주소로도 쓴다.
+MAIL_FROM = "IT학교 설립준비위원회 <itschool@ictact.kr>"
+# 담당자 알림 수신 주소(NOTIFY_TO)는 개인 주소가 포함되어 공개 저장소에 두지 않는다.
+# Worker Secret으로 등록한다: Settings → Variables and Secrets → Secret "NOTIFY_TO"
 SITE_URL = "https://itschool.ictact.kr"

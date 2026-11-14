@@ -49,12 +49,15 @@ IP 원문은 저장하지 않고 이 값과 섞은 해시만 10분간 보관한�
 
 담당자 알림과 신청자 접수 확인에 쓴다. 설정하지 않으면 메일만 빠지고 신청 저장은 정상 동작한다.
 
-1. resend.com 가입 → Domains → **Add domain**: `itschool.ictact.kr` (또는 `ictact.kr`)
-2. 안내되는 DNS 레코드(SPF·DKIM)를 ictact.kr DNS에 추가 → Verify
-3. 🔒 API Keys → Create(Sending access) → Worker에 Secret `RESEND_API_KEY`로 추가
-4. 📨 다음 두 값을 알려준다 → `wrangler.toml`에 반영
-   - `MAIL_FROM`: 예) `IT학교 설립추진위원회 <noreply@itschool.ictact.kr>`
-   - `NOTIFY_TO`: 신청 알림을 받을 담당자 주소(여러 개면 쉼표)
+- 발신 주소 `MAIL_FROM`: `IT학교 설립준비위원회 <itschool@ictact.kr>` ✅ `wrangler.toml` 반영
+- 신청자 메일의 회신 주소도 `itschool@ictact.kr`(담당자 개인 주소는 노출하지 않음)
+
+1. resend.com 가입 → Domains → **Add domain**: **`ictact.kr`** (발신 주소가 `@ictact.kr`이므로)
+2. 안내되는 DNS 레코드(SPF·DKIM, 필요 시 MX)를 ictact.kr DNS에 추가 → Verify
+   - ictact.kr에 이미 SPF 레코드가 있으면 새로 만들지 말고 기존 레코드에 `include:`를 합친다(SPF는 하나만 허용).
+3. 🔒 API Keys → Create(Sending access) → Worker에 Secret `RESEND_API_KEY`
+4. 🔒 Worker에 Secret **`NOTIFY_TO`** 추가: 담당자 알림 수신 주소(쉼표 구분)
+   - 개인 주소가 들어가므로 공개 저장소가 아닌 Secret으로 관리한다.
 
 > 대시보드에서 **일반 변수(Text)**를 추가하면 다음 배포 때 `wrangler.toml`의 `[vars]`로 덮어쓰인다. 일반 값은 개발 담당에게 전달하고, 대시보드에는 **Secret만** 넣는다.
 
@@ -81,7 +84,8 @@ SELECT created_at, name, email, types, status FROM applications ORDER BY created
 | 📨 | D1 Database ID | ✅ 반영 |
 | 📨 | workers.dev 주소 | ✅ itschool-prep.data-fc8.workers.dev |
 | 📨 | Turnstile Site key | ✅ `.env.production` |
-| 📨 | MAIL_FROM, NOTIFY_TO | |
+| 📨 | MAIL_FROM | ✅ `wrangler.toml` |
+| 🔒 | NOTIFY_TO | |
 | 🔒 | D1 테이블 생성(마이그레이션) | |
 | 🔒 | TURNSTILE_SECRET | |
 | 🔒 | RATE_SALT | |

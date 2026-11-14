@@ -1,4 +1,4 @@
 # 로컬 개발용 비밀값 예시. `.dev.vars`로 복사해 사용(커밋 금지).
 RATE_SALT=local-dev-salt
 # RESEND_API_KEY=
-# TURNSTILE_SECRET은 로컬에서 비워 둔다. 통합 테스트(npm run test:api)는 가짜 siteverify(tests/mock-siteverify.mjs)를 쓴다.
+# TURNSTILE_SECRET은 로컬에서 비워 둔다. 통합 테스트(npm run test:api)는 가짜 서비스(tests/mock-services.mjs)를 쓴다.

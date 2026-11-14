@@ -120,3 +120,22 @@ test('Turnstile 다른 action 토큰 → 403', async () => {
   const { res } = await post({ ...valid(`ts-act-${run}@ex.com`), 'cf-turnstile-response': 'other-action' });
   assert.equal(res.status, 403);
 });
+
+test('메일: 담당자 알림 + 신청자 접수 확인, 회신 주소는 공용 주소', async () => {
+  const email = `mail-${run}@ex.com`;
+  await post(valid(email));
+  let mails = [];
+  for (let i = 0; i < 20 && mails.length < 2; i++) {
+    await new Promise((r) => setTimeout(r, 200));
+    mails = (await (await fetch('http://127.0.0.1:8799/emails')).json()).filter((m) => JSON.stringify(m).includes(email));
+  }
+  const notify = mails.find((m) => m.to.includes('staff1@example.org'));
+  const receipt = mails.find((m) => m.to.includes(email));
+  assert.ok(notify, '담당자 알림');
+  assert.deepEqual(notify.to, ['staff1@example.org', 'staff2@example.org']);
+  assert.equal(notify.reply_to, email);
+  assert.ok(receipt, '접수 확인');
+  assert.equal(receipt.reply_to, 'itschool@ictact.kr');
+  assert.ok(!JSON.stringify(receipt).includes('staff1@example.org'), '신청자 메일에 담당자 주소 없음');
+  assert.equal(receipt.from, 'IT학교 설립준비위원회 <itschool@ictact.kr>');
+});
