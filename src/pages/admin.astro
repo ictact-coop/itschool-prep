@@ -1,0 +1,265 @@
+---
+// 신청 관리 화면. 데이터는 접속 후 /admin/api/* 에서 받는다(Access 인증 필요).
+import '../styles/global.css';
+import { participationTypes } from '../data/home';
+import { site } from '../site';
+
+const statuses = [
+  { value: 'new', label: '신규' },
+  { value: 'assigned', label: '담당 지정' },
+  { value: 'contacted', label: '연락 완료' },
+  { value: 'closed', label: '종료' },
+];
+---
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>신청 관리 | {site.org}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#list">목록으로 바로가기</a>
+    <header class="bar">
+      <div class="bar-inner">
+        <div>
+          <h1 class="bar-title">신청 관리</h1>
+          <p class="bar-sub">{site.org}</p>
+        </div>
+        <p class="me" data-me></p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="tools" aria-label="검색과 필터">
+        <div class="field grow">
+          <label for="q">검색</label>
+          <input id="q" type="search" placeholder="이름, 이메일, 소속, 내용" data-filter="q" />
+        </div>
+        <div class="field">
+          <label for="ft">참여 방식</label>
+          <select id="ft" data-filter="type">
+            <option value="">전체</option>
+            {participationTypes.map((t) => <option value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <label for="fs">상태</label>
+          <select id="fs" data-filter="status">
+            <option value="">전체</option>
+            {statuses.map((s) => <option value={s.value}>{s.label}</option>)}
+          </select>
+        </div>
+        <div class="tool-actions">
+          <button class="btn btn-outline" type="button" data-reload>새로고침</button>
+          <a class="btn btn-primary" href="/admin/export.csv" download>CSV 내보내기</a>
+        </div>
+      </section>
+
+      <p class="summary" role="status" aria-live="polite" data-summary>불러오는 중…</p>
+
+      <ul class="list" id="list" tabindex="-1" data-list></ul>
+
+      <template data-item-tpl>
+        <li class="item">
+          <article>
+            <header class="item-head">
+              <h2 class="item-name"><span data-f="name"></span> <a data-f="email"></a></h2>
+              <p class="item-meta"><span data-f="created"></span><span data-f="updated"></span></p>
+            </header>
+            <dl class="item-body">
+              <div><dt>참여 방식</dt><dd data-f="types"></dd></div>
+              <div><dt>소속·활동분야</dt><dd data-f="affiliation"></dd></div>
+              <div><dt>소식 수신</dt><dd data-f="news"></dd></div>
+              <div class="wide"><dt>남긴 이야기</dt><dd class="msg" data-f="message"></dd></div>
+            </dl>
+            <form class="item-edit" data-edit>
+              <div class="field">
+                <label data-for="status">상태</label>
+                <select name="status">
+                  {statuses.map((s) => <option value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+              <div class="field">
+                <label data-for="assignee">담당자</label>
+                <input name="assignee" type="text" maxlength="50" />
+              </div>
+              <div class="field grow">
+                <label data-for="admin_note">메모</label>
+                <textarea name="admin_note" rows="2" maxlength="2000"></textarea>
+              </div>
+              <div class="edit-actions">
+                <button class="btn btn-primary" type="submit">저장</button>
+                <button class="btn btn-danger" type="button" data-delete>삭제</button>
+              </div>
+              <p class="edit-status" role="status" aria-live="polite" data-edit-status></p>
+              <p class="audit" data-f="audit"></p>
+            </form>
+          </article>
+        </li>
+      </template>
+    </main>
+
+    <script define:vars={{ typeLabels: Object.fromEntries(participationTypes.map((t) => [t.value, t.label])), statusLabels: Object.fromEntries(statuses.map((s) => [s.value, s.label])) }}>
+      const $ = (sel, el = document) => el.querySelector(sel);
+      const list = $('[data-list]');
+      const summary = $('[data-summary]');
+      const tpl = $('[data-item-tpl]');
+      const filters = { q: $('[data-filter=q]'), type: $('[data-filter=type]'), status: $('[data-filter=status]') };
+      let items = [];
+      let seq = 0;
+
+      const fmt = (iso) => iso ? new Date(iso).toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+      const days = (iso) => Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+
+      async function api(path, init = {}) {
+        const res = await fetch(path, { ...init, headers: { Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers } });
+        const body = await res.json().catch(() => null);
+        if (!res.ok || !body?.ok) throw Object.assign(new Error(body?.message || `요청 실패 (${res.status})`), { status: res.status, body });
+        return body;
+      }
+
+      async function load() {
+        summary.textContent = '불러오는 중…';
+        try {
+          const [me, data] = await Promise.all([api('/admin/api/me'), api('/admin/api/applications')]);
+          $('[data-me]').textContent = `${me.email} 로그인`;
+          items = data.items;
+          if (items.length >= data.limit) summary.dataset.warn = `최근 ${data.limit}건만 표시합니다. 전체는 CSV로 내려받으세요.`;
+          render();
+        } catch (e) {
+          summary.textContent = e.status === 401 ? '로그인이 만료되었습니다. 새로고침해 주세요.' : `불러오지 못했습니다: ${e.message}`;
+        }
+      }
+
+      function matches(it) {
+        const q = filters.q.value.trim().toLowerCase();
+        if (filters.type.value && !it.types.includes(filters.type.value)) return false;
+        if (filters.status.value && it.status !== filters.status.value) return false;
+        if (q && ![it.name, it.email, it.affiliation, it.message, it.note, it.assignee].some((v) => v.toLowerCase().includes(q))) return false;
+        return true;
+      }
+
+      function render() {
+        const shown = items.filter(matches);
+        const counts = Object.fromEntries(Object.keys(statusLabels).map((k) => [k, items.filter((i) => i.status === k).length]));
+        summary.textContent = `전체 ${items.length}건 중 ${shown.length}건 표시 · ` +
+          Object.entries(counts).map(([k, n]) => `${statusLabels[k]} ${n}`).join(' · ') + (summary.dataset.warn ? ` · ${summary.dataset.warn}` : '');
+        list.replaceChildren(...shown.map(row));
+      }
+
+      function row(it) {
+        const node = tpl.content.firstElementChild.cloneNode(true);
+        const f = (k) => node.querySelector(`[data-f="${k}"]`);
+        const n = ++seq;
+        node.dataset.id = it.id;
+        f('name').textContent = it.name;
+        f('email').textContent = it.email;
+        f('email').href = `mailto:${it.email}`;
+        f('created').textContent = `신청 ${fmt(it.createdAt)} (${days(it.createdAt)}일 경과)`;
+        f('updated').textContent = it.updatedAt !== it.createdAt ? ` · 신청자 수정 ${fmt(it.updatedAt)}` : '';
+        f('types').textContent = it.types.map((t) => typeLabels[t] ?? t).join(', ');
+        f('affiliation').textContent = it.affiliation || '-';
+        f('news').textContent = it.newsOptIn ? '동의' : '미동의';
+        f('message').textContent = it.message || '-';
+        f('audit').textContent = it.adminUpdatedAt ? `마지막 관리 변경: ${fmt(it.adminUpdatedAt)} · ${it.adminUpdatedBy}` : '';
+        const form = node.querySelector('[data-edit]');
+        for (const el of form.querySelectorAll('[name]')) {
+          el.id = `${el.name}-${n}`;
+          form.querySelector(`[data-for="${el.name}"]`).htmlFor = el.id;
+        }
+        form.status.value = it.status;
+        form.assignee.value = it.assignee;
+        form.admin_note.value = it.note;
+        node.querySelector('article').setAttribute('aria-label', `${it.name} 신청`);
+
+        const st = node.querySelector('[data-edit-status]');
+        form.addEventListener('submit', async (ev) => {
+          ev.preventDefault();
+          st.textContent = '저장 중…'; st.dataset.tone = '';
+          try {
+            const { item } = await api(`/admin/api/applications/${it.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ status: form.status.value, assignee: form.assignee.value, admin_note: form.admin_note.value }),
+            });
+            Object.assign(it, item);
+            f('audit').textContent = `마지막 관리 변경: ${fmt(it.adminUpdatedAt)} · ${it.adminUpdatedBy}`;
+            st.textContent = '저장했습니다.';
+            render(); // 상태별 개수와 필터 결과 갱신
+            const again = list.querySelector(`[data-id="${it.id}"] [data-edit-status]`);
+            if (again) again.textContent = '저장했습니다.';
+          } catch (e) {
+            st.dataset.tone = 'error';
+            st.textContent = e.body?.errors ? Object.values(e.body.errors).join(' ') : e.message;
+          }
+        });
+        node.querySelector('[data-delete]').addEventListener('click', async () => {
+          if (!confirm(`${it.name} (${it.email}) 신청을 삭제할까요?\n삭제하면 되돌릴 수 없습니다.`)) return;
+          st.textContent = '삭제 중…'; st.dataset.tone = '';
+          try {
+            await api(`/admin/api/applications/${it.id}`, { method: 'DELETE' });
+            items = items.filter((x) => x.id !== it.id);
+            render();
+            summary.textContent = `삭제했습니다. ${summary.textContent}`;
+            list.focus();
+          } catch (e) {
+            st.dataset.tone = 'error';
+            st.textContent = e.message;
+          }
+        });
+        return node;
+      }
+
+      for (const el of Object.values(filters)) el.addEventListener('input', render);
+      $('[data-reload]').addEventListener('click', load);
+      load();
+    </script>
+
+    <style is:global>
+      body { background: var(--color-bg); }
+      .bar { background: var(--color-footer-bg); color: #fff; }
+      .bar-inner, .wrap { max-width: 72rem; margin-inline: auto; padding-inline: var(--gutter); }
+      .bar-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2) var(--space-4); padding-block: var(--space-3); }
+      .bar-title { font-weight: 800; font-size: var(--text-lg); }
+      .bar-sub, .me { font-size: var(--text-xs); color: var(--color-footer-text); }
+      .wrap { padding-block: var(--space-5) var(--space-8); display: grid; gap: var(--space-4); }
+
+      .tools { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3); padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+      .field { display: grid; gap: var(--space-1); min-width: 0; }
+      .field.grow { flex: 1 1 14rem; }
+      .field label { font-size: var(--text-xs); font-weight: 600; }
+      .tool-actions, .edit-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+      input[type='search'], input[type='text'], select, textarea {
+        width: 100%; min-height: 2.5rem; padding: var(--space-1) var(--space-3);
+        font: inherit; font-size: var(--text-base); color: var(--color-text);
+        background: var(--color-surface); border: 1px solid #a9b8b2; border-radius: var(--radius-sm);
+      }
+      textarea { resize: vertical; }
+      .btn { min-height: 2.5rem; }
+      .btn-danger { background: var(--color-surface); color: var(--color-error); border-color: var(--color-error); }
+      .btn-danger:hover { background: #fdecea; }
+
+      .summary { font-size: var(--text-sm); color: var(--color-text-muted); }
+      .list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+      .list:focus { outline: none; }
+      .item article { display: grid; gap: var(--space-3); padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+      .item-head { display: grid; gap: var(--space-1); }
+      .item-name { font-size: var(--text-base); font-weight: 700; }
+      .item-name a { font-weight: 400; font-size: var(--text-sm); margin-left: var(--space-2); }
+      .item-meta { font-size: var(--text-xs); color: var(--color-text-muted); }
+      .item-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--space-2) var(--space-4); margin: 0; }
+      .item-body .wide { grid-column: 1 / -1; }
+      .item-body dt { font-size: var(--text-xs); color: var(--color-text-muted); }
+      .item-body dd { margin: 0; font-size: var(--text-sm); }
+      .msg { white-space: pre-wrap; }
+      .item-edit { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+      .item-edit .field:not(.grow) { flex: 0 1 10rem; }
+      .edit-status { flex-basis: 100%; font-size: var(--text-xs); }
+      .edit-status:empty, .audit:empty { display: none; }
+      .edit-status[data-tone='error'] { color: var(--color-error); font-weight: 600; }
+      .audit { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-muted); }
+    </style>
+  </body>
+</html>

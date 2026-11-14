@@ -25,7 +25,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** FormData 또는 URLSearchParams에서 입력값을 읽는다(공백 정리, 알 수 없는 유형 제거). */
 export function readApplyInput(form: { get(k: string): unknown; getAll(k: string): unknown[] }): ApplyInput {
-  const str = (k: string) => (typeof form.get(k) === 'string' ? (form.get(k) as string).trim() : '');
+  // 폼 전송은 줄바꿈을 CRLF로 바꾸므로 저장 전에 LF로 통일한다
+  const str = (k: string) => (typeof form.get(k) === 'string' ? (form.get(k) as string).replace(/\r\n?/g, '\n').trim() : '');
   const types = form
     .getAll('types')
     .filter((v): v is ParticipationType => typeof v === 'string' && (PARTICIPATION_TYPES as readonly string[]).includes(v));
