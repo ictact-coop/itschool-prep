@@ -7,7 +7,7 @@ compatibility_date = "2026-11-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "itschool-prep"
-database_id = "00000000-0000-0000-0000-000000000000" # Cloudflare에서 만든 뒤 실제 ID로 교체
+database_id = "7a02b40b-78bc-4aca-9fe2-8a2fbdd11274"
 
 [vars]
 # 아래 셋은 정해지면 채운다. 비어 있으면 해당 메일을 보내지 않는다.
