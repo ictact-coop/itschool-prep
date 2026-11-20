@@ -1,0 +1,109 @@
+---
+// 'IT학교 한눈에 보기' 팝업. [data-open-about] 링크(/about)를 누르거나 주소가 #about이면 열린다.
+// JS가 없으면 링크가 그대로 /about 페이지로 이동한다.
+import AboutContent from './AboutContent.astro';
+import { about } from '../data/home';
+---
+<dialog class="about-dialog" aria-labelledby="about-dialog-title" data-about-dialog>
+  <div class="frame">
+    <header class="head">
+      <h2 id="about-dialog-title">{about.title}</h2>
+      <button class="close" type="button" data-about-close aria-label="닫기">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+      </button>
+    </header>
+    <div class="content" tabindex="0" role="region" aria-label="IT학교 소개 내용">
+      <AboutContent headingLevel={3} />
+    </div>
+    <footer class="foot">
+      <a class="btn btn-primary" href="#apply" data-about-cta data-preselect="committee">설립에 함께하기</a>
+      <a class="btn btn-outline" href="#apply" data-about-cta data-preselect="interest">시범교육 소식 받기</a>
+      <a class="share" href="/about">공유용 주소 열기</a>
+    </footer>
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('[data-about-dialog]');
+  if (dialog && typeof dialog.showModal === 'function') {
+    let opener: HTMLElement | null = null;
+
+    const open = (from?: HTMLElement | null) => {
+      opener = from ?? (document.activeElement as HTMLElement | null);
+      if (!dialog.open) dialog.showModal();
+      dialog.querySelector<HTMLElement>('.content')?.scrollTo({ top: 0 });
+      if (location.hash !== '#about') history.replaceState(null, '', '#about');
+    };
+    const clearHash = () => {
+      if (location.hash === '#about') history.replaceState(null, '', location.pathname + location.search);
+    };
+
+    document.querySelectorAll<HTMLAnchorElement>('[data-open-about]').forEach((a) =>
+      a.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        open(a);
+      }),
+    );
+    dialog.querySelector('[data-about-close]')?.addEventListener('click', () => dialog.close());
+    // 바깥(배경) 클릭으로 닫기
+    dialog.addEventListener('click', (ev) => {
+      if (ev.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', () => {
+      clearHash();
+      opener?.focus?.();
+    });
+    // CTA: 닫고 신청 폼으로. 유형 미리 선택은 ApplyForm의 [data-preselect] 처리와 같은 방식
+    dialog.querySelectorAll<HTMLAnchorElement>('[data-about-cta]').forEach((a) =>
+      a.addEventListener('click', () => {
+        opener = null;
+        dialog.close();
+      }),
+    );
+
+    if (location.hash === '#about') open(null);
+    window.addEventListener('hashchange', () => {
+      if (location.hash === '#about') open(null);
+    });
+  }
+</script>
+
+<style>
+  .about-dialog {
+    width: min(44rem, calc(100vw - 2rem));
+    max-height: min(90vh, 52rem);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-lg);
+    color: var(--color-text);
+    background: var(--color-surface);
+    box-shadow: 0 20px 60px rgb(0 0 0 / 0.25);
+  }
+  .about-dialog::backdrop { background: rgb(15 30 27 / 0.55); }
+  @media (max-width: 39.99rem) {
+    .about-dialog { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; }
+  }
+  .frame { display: flex; flex-direction: column; max-height: inherit; height: 100%; }
+  .head {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .head h2 { font-size: var(--text-xl); font-weight: 800; margin: 0; }
+  .close {
+    display: grid; place-items: center;
+    width: 2.75rem; height: 2.75rem; flex: none;
+    border: 1px solid var(--color-border); border-radius: 50%;
+    background: var(--color-surface); color: var(--color-text); cursor: pointer;
+  }
+  .close:hover { background: var(--color-card); }
+  .content:focus-visible { outline-offset: -3px; }
+  .content { overflow-y: auto; padding: var(--space-5); flex: 1; overscroll-behavior: contain; }
+  .foot {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-card);
+  }
+  .share { margin-left: auto; font-size: var(--text-sm); }
+</style>

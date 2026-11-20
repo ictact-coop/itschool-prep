@@ -6,10 +6,11 @@ export const site = {
   partner: '공동체IT사회적협동조합',
   url: 'https://itschool.ictact.kr',
   description:
-    '누구나 디지털 기술을 이해하고 자신의 삶과 공익활동에 활용할 수 있도록, 시민과 교육자, 기술자가 함께 배우고 실험하는 학교를 준비합니다.',
+    '시민과 공익활동가를 위한 디지털 대학, IT학교. 대학처럼 교양필수로 기본기를 익히고 전공선택으로 내 활동에 맞게 배웁니다. 그 학교를 지금 함께 세우고 있습니다.',
   contactEmail: 'itschool@ictact.kr' as string | null, // 공개 연락처(2026-11-14 확정)
   nav: [
-    { href: '/#why', label: '소개' },
+    { href: '/about', label: '소개', about: true },
+    { href: '/#curriculum', label: '배우는 방법' },
     { href: '/#progress', label: '진행상황' },
   ],
   joinHref: '/#join',

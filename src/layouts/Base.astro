@@ -10,8 +10,10 @@ interface Props {
 }
 
 const { title, description = site.description } = Astro.props;
-const fullTitle = title ? `${title} | ${site.org}` : `${site.name} | ${site.org}`;
-const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).href;
+const fullTitle = title ? `${title} | ${site.org}` : `${site.name} | 시민과 공익활동가를 위한 디지털 대학`;
+// build.format 'file' 때문에 pathname이 /index.html, /about.html 형태로 들어오므로 정리한다
+const cleanPath = Astro.url.pathname.replace(/index\.html$/, '').replace(/\.html$/, '');
+const canonical = new URL(cleanPath, Astro.site ?? site.url).href;
 ---
 <!doctype html>
 <html lang="ko">
@@ -28,6 +30,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).href;
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={site.org} />
+    <meta property="og:image" content={new URL('/og.png', site.url).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="시민과 공익활동가를 위한 디지털 대학, IT학교. 교양필수와 전공선택으로 배웁니다." />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <a class="skip-link" href="#main">본문 바로가기</a>
