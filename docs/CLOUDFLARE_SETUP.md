@@ -143,5 +143,5 @@ Cloudflare 공식 문서(2026-11 기준)를 따른 절차다.
 | 🔒 | RATE_SALT | ✅ |
 | 🔒 | RESEND_API_KEY | ✅ |
 | 🔒 | D1 `0002_admin_audit.sql` 실행 | ✅ |
-| 📨 | Access Team domain, AUD Tag | |
+| 📨 | Access Team domain, AUD Tag | ✅ `wrangler.toml` |
 | — | 커스텀 도메인 itschool.ictact.kr | ✅ 연결됨 |
