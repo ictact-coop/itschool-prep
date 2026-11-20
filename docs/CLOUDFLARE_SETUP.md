@@ -86,7 +86,10 @@ Cloudflare 공식 문서(2026-11 기준)를 따른 절차다.
 
 2. **Zero Trust 준비(처음 한 번)**
    - 대시보드 왼쪽 **Zero Trust** → 팀 이름을 정하고 **Free** 플랜 선택(결제수단 등록을 요구할 수 있으나 무료)
-   - 로그인 방법: **Zero Trust → Settings → Authentication → Login methods** 에 **One-time PIN** 이 있는지 확인(기본 제공)
+   - **One-time PIN 로그인 추가(필수)**: **Zero Trust → Integrations → Identity providers → Add new identity provider → One-time PIN**
+     - 새 Zero Trust 조직의 기본 로그인 방법은 "Cloudflare 계정 로그인(Restrict to account members)"이라
+       Cloudflare 계정 구성원이 아닌 담당자는 *"Cloudflare sign-in is restricted to members of the account."* 로 막힌다.
+       One-time PIN은 자동으로 추가되지 않는다.
 
 3. **애플리케이션 만들기**: **Zero Trust → Access controls → Applications → Create new application → Self-hosted and private**
    1. Application name: `IT학교 신청 관리`
@@ -104,7 +107,8 @@ Cloudflare 공식 문서(2026-11 기준)를 따른 절차다.
    3. **Access policies** → Create new policy
       - Policy name: `신청 관리 담당자`, Action: **Allow**
       - Include → Selector **Emails** → 담당자 주소들(예: `itschool@ictact.kr`, 담당자 개인 주소)
-   4. Login methods: **One-time PIN** 선택
+   4. Login methods(Authentication): **One-time PIN** 켜기. Cloudflare 계정 로그인은 끄거나 함께 둔다(함께 두면 로그인 화면에서 선택).
+      OTP만 켠 경우 **Apply instant authentication**을 켜면 선택 화면 없이 바로 이메일 입력으로 간다.
    5. Session Duration: `24 hours`
    6. **Create**
 
@@ -122,6 +126,8 @@ Cloudflare 공식 문서(2026-11 기준)를 따른 절차다.
 - Workers와 Access: https://developers.cloudflare.com/workers/configuration/cloudflare-access/
 - Self-hosted 애플리케이션: https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/
 - 경로 규칙: https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/
+- One-time PIN: https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/one-time-pin/
+- Cloudflare 계정 로그인(기본값): https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/cloudflare/
 - JWT 검증·AUD 위치: https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/
 
 ## 이후 단계
