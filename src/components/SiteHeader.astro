@@ -10,7 +10,7 @@ import { site } from '../site';
     <nav aria-label="주요 메뉴">
       <ul>
         {site.nav.map((item) => (
-          <li class="nav-text"><a href={item.href}>{item.label}</a></li>
+          <li class="nav-text"><a href={item.href} data-open-about={'about' in item && item.about ? '' : undefined}>{item.label}</a></li>
         ))}
         <li><a class="btn btn-primary" href={site.joinHref}>함께하기</a></li>
       </ul>

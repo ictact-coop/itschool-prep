@@ -1,0 +1,24 @@
+---
+// 공유용 'IT학교 한눈에 보기' 페이지. 첫 화면 팝업과 같은 내용.
+import Base from '../layouts/Base.astro';
+import AboutContent from '../components/AboutContent.astro';
+import { about } from '../data/home';
+---
+<Base title={about.title} description={about.description}>
+  <article class="container page">
+    <p class="crumb"><a href="/">← 첫 화면</a></p>
+    <h1>{about.title}</h1>
+    <AboutContent headingLevel={2} />
+    <div class="cta">
+      <a class="btn btn-primary" href="/#apply">설립에 함께하기</a>
+      <a class="btn btn-outline" href="/#curriculum">배움 지도 자세히 보기</a>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .page { display: grid; gap: var(--space-5); max-width: 46rem; padding-block: var(--space-7) var(--space-8); }
+  .crumb { font-size: var(--text-sm); }
+  h1 { font-size: var(--text-2xl); }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+</style>

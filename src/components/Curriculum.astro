@@ -1,0 +1,109 @@
+---
+import SectionHeader from './SectionHeader.astro';
+import { curriculum, type Subject } from '../data/home';
+const { entrance, required, major, more } = curriculum;
+---
+<section class="section curriculum" aria-labelledby="curriculum">
+  <div class="container">
+    <SectionHeader id="curriculum" title={curriculum.title} lead={curriculum.lead} />
+
+    <ol class="map">
+      <li class="stage stage-entrance">
+        <p class="univ"><span class="step-no" aria-hidden="true">1</span>{entrance.univ}</p>
+        <h3>{entrance.title}</h3>
+        <p class="body">{entrance.body}</p>
+        <p class="links">
+          {entrance.links.map((l) => (
+            <a href={l.href} target="_blank" rel="noopener">{l.label}<span class="visually-hidden">(새 창)</span> <span aria-hidden="true">↗</span></a>
+          ))}
+        </p>
+      </li>
+
+      {[{ ...required, no: 2, kind: 'required' }, { ...major, no: 3, kind: 'major' }].map((block) => (
+        <li class={`stage stage-${block.kind}`}>
+          <p class="univ"><span class="step-no" aria-hidden="true">{block.no}</span>{block.univ}</p>
+          <h3>{block.title}</h3>
+          <ul class="subjects">
+            {(block.subjects as Subject[]).map((s) => (
+              <li class="subject">
+                <h4>{s.title}</h4>
+                <p>{s.body}</p>
+                <p class="tools"><span class="visually-hidden">예시 도구:</span>{s.tools.map((t) => <span class="tool">{t}</span>)}</p>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+
+      {more.map((m, i) => (
+        <li class="stage stage-more">
+          <p class="univ"><span class="step-no" aria-hidden="true">{i + 4}</span>{m.univ}</p>
+          <h3>{m.title}</h3>
+          <p class="body">{m.body}</p>
+        </li>
+      ))}
+    </ol>
+    <p class="note">{curriculum.toolNote}</p>
+  </div>
+</section>
+
+<style>
+  .curriculum { padding-block: var(--space-7); border-top: 1px solid var(--color-border); }
+  @media (min-width: 48rem) { .curriculum { padding-block: var(--space-8); } }
+
+  .map { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
+  @media (min-width: 48rem) {
+    .map { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .stage-entrance { grid-column: 1 / -1; }
+    .stage-required, .stage-major { grid-column: span 2; }
+  }
+
+  .stage {
+    display: grid; align-content: start; gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  @media (min-width: 48rem) { .stage { padding: var(--space-5); } }
+  .stage-entrance { background: var(--color-hero-bg); }
+  .stage-required { border-top: 4px solid var(--color-primary); }
+  .stage-major { border-top: 4px solid #4a7fa8; }
+
+  .univ {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font-size: var(--text-xs); font-weight: 700; color: var(--color-primary);
+  }
+  .stage-major .univ { color: #2e5f86; }
+  .step-no {
+    display: grid; place-items: center;
+    width: 1.375rem; height: 1.375rem; border-radius: 50%;
+    background: var(--color-primary); color: #fff; font-size: 0.75rem;
+  }
+  .stage-major .step-no { background: #2e5f86; }
+  h3 { font-size: var(--text-lg); font-weight: 800; }
+  .body { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); font-weight: 600; }
+
+  .subjects { list-style: none; margin: var(--space-1) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+  @media (min-width: 30rem) { .subjects { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .subject {
+    display: grid; align-content: start; gap: var(--space-1);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .subject h4 { margin: 0; font-size: var(--text-base); font-weight: 700; }
+  .subject p { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .tools { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1); }
+  .tool {
+    padding: 0.0625rem var(--space-2);
+    border-radius: 999px;
+    background: var(--color-primary-soft);
+    color: var(--status-done-text);
+    font-size: 0.75rem;
+  }
+  .stage-major .tool { background: #e7eff6; color: #244c6b; }
+  .note { margin-top: var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); }
+</style>
