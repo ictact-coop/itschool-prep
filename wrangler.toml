@@ -34,5 +34,5 @@ MAIL_FROM = "IT학교 설립준비위원회 <itschool@ictact.kr>"
 # Worker Secret으로 등록한다: Settings → Variables and Secrets → Secret "NOTIFY_TO"
 SITE_URL = "https://itschool.ictact.kr"
 # 관리 화면(/admin) Cloudflare Access. 둘 다 비어 있으면 관리 화면은 503으로 잠긴다.
-ACCESS_TEAM_DOMAIN = ""   # 예: "https://<team>.cloudflareaccess.com"
-ACCESS_AUD = ""           # Access 애플리케이션의 Application Audience (AUD) Tag
+ACCESS_TEAM_DOMAIN = "https://still-forest-1e55.cloudflareaccess.com"
+ACCESS_AUD = "d65083357d8837412c93eb6e79ad5ebe857d8cd2512ff0c34fc4641cd62609ce"   # 애플리케이션 "IT학교 신청 관리"
